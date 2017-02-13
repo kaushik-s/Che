@@ -10,8 +10,9 @@
  *******************************************************************************/
 package org.eclipse.che.plugin.maven;
 
-import com.google.inject.Inject;
+import org.eclipse.che.commons.annotation.Nullable;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 
@@ -27,8 +28,9 @@ public class MavenOptsEnvVariableProvider implements Provider<String> {
     @Named("che.workspace.java_opts")
     private String javaOpts;
 
-    @Inject(optional = true)
-    @Named("che.plugin.maven.maven_opts")
+    @Inject
+    @Named("che.workspace.maven.options")
+    @Nullable
     private String mavenOpts;
 
     @Override
