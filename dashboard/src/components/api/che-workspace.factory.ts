@@ -18,6 +18,7 @@ import {CheEnvironmentRegistry} from './environment/che-environment-registry.fac
 import {CheWebsocket} from './che-websocket.factory';
 
 interface ICHELicenseResource<T> extends ng.resource.IResourceClass<T> {
+  fetchWorkspacesByNamespace: any;
   getDetails: any;
   create: any;
   createWithNamespace: any;
@@ -87,6 +88,7 @@ export class CheWorkspace {
 
     // remote call
     this.remoteWorkspaceAPI = <ICHELicenseResource<any>>this.$resource('/api/workspace', {}, {
+        fetchWorkspacesByNamespace: {method: 'GET', url: '/api/workspace/namespace/:namespace', isArray: true},
         getDetails: {method: 'GET', url: '/api/workspace/:workspaceKey'},
         // having 2 methods for creation to ensure namespace parameter won't be send at all if value is null or undefined
         create: {method: 'POST', url: '/api/workspace'},
@@ -177,6 +179,19 @@ export class CheWorkspace {
     });
   }
 
+  /**
+   * Fetches workspaces by provided namespace.
+   *
+   * @param namespace namespace
+   */
+  fetchWorkspacesByNamespace(namespace: string): ng.IPromise<any> {
+    let promise = this.remoteWorkspaceAPI.fetchWorkspacesByNamespace({namespace: namespace}).$promise;
+    let resultPromise = promise.then((workspaces: any) => {
+      this.workspacesByNamespace.set(namespace, workspaces);
+    });
+    return resultPromise;
+  }
+
   getWorkspacesByNamespace(namespace: string): Array<che.IWorkspace> {
     return this.workspacesByNamespace.get(namespace);
   }
@@ -202,7 +217,6 @@ export class CheWorkspace {
       let remoteWorkspaces = [];
       this.workspaces.length = 0;
       this.workspacesById.clear();
-      this.workspacesByNamespace.clear();
       // add workspace if not temporary
       data.forEach((workspace: che.IWorkspace) => {
 
@@ -210,12 +224,6 @@ export class CheWorkspace {
           remoteWorkspaces.push(workspace);
           this.workspaces.push(workspace);
           this.workspacesById.set(workspace.id, workspace);
-          let namespaceWorkspaces = this.workspacesByNamespace.get(workspace.namespace);
-          if (namespaceWorkspaces) {
-            namespaceWorkspaces.push(workspace);
-          } else {
-            this.workspacesByNamespace.set(workspace.namespace, [workspace]);
-          }
         }
         this.workspacesById.set(workspace.id, workspace);
         this.startUpdateWorkspaceStatus(workspace.id);
